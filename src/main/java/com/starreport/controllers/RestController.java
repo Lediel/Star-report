@@ -18,36 +18,26 @@ import org.springframework.web.client.RestTemplate;
 import javax.servlet.http.HttpServletResponse;
 
 @org.springframework.web.bind.annotation.RestController
-
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class RestController {
 
-//    @RequestMapping("/hello")
-//    public String hello() {
-//        return "Hello world";
-//    }
-//
-//    @GetMapping(value = "/callclienthello")
-//    private String getHelloClient() {
-//        String uri = "http://localhost:8080/hello";
-//        RestTemplate restTemplate = new RestTemplate();
-//        String result = restTemplate.getForObject(uri, String.class);
-//        return result;
-//    }
-
-
     private PeopleReport convertToPeopleReport(Person person, List<Films> filmes, Planets planeta) {
+
+        int altura = Integer.parseInt(person.getHeight());
+        int peso = Integer.parseInt(person.getMass());
 
         PeopleReport peopleReport = new PeopleReport();
 
         peopleReport.setName(person.getName());
-        peopleReport.setHeight(person.getHeight());
-        peopleReport.setMass(person.getMass());
+        peopleReport.setHeight(altura);
+        peopleReport.setMass(peso);
         peopleReport.setHair_color(person.getHair_color());
         peopleReport.setSkin_color(person.getSkin_color());
         peopleReport.setEye_color(person.getEye_color());
         peopleReport.setGender(person.getGender());
-        peopleReport.setHomeworldName(planeta.getName());
+        peopleReport.setHomeworldName(planeta.getName().toUpperCase());
         peopleReport.setFilms(filmes);
+        peopleReport.setQttFilms(filmes.size());
         return peopleReport;
     }
 
@@ -63,8 +53,6 @@ public class RestController {
 
             List<Person> personList = people.getResults();
 
-            Map<String, Object> parametros = new HashMap<>();
-
             List<PeopleReport> peopleReports = new ArrayList<>();
             for (Person person : personList) {
 
@@ -79,9 +67,10 @@ public class RestController {
 
                 peopleReports.add(convertToPeopleReport(person, filmes, planeta));
             }
+            peopleReports.sort(Comparator.comparing(PeopleReport::getHomeworldName)
+                    .thenComparing(PeopleReport::getName));
 
-
-            return pdfReport(parametros, response, "pessoasReport", pessoasEmissao(peopleReports));
+            return pdfReport(response, new JRBeanCollectionDataSource(peopleReports));
         } catch (Throwable e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
@@ -90,23 +79,17 @@ public class RestController {
 
     }
 
-    private JRBeanCollectionDataSource pessoasEmissao(List<PeopleReport> tramitacaoDtoList) {
-        return new JRBeanCollectionDataSource(tramitacaoDtoList);
-    }
-
-    private byte[] pdfReport(@RequestParam Map<String, Object> parametros, HttpServletResponse response, String nomeRelatorio, JRBeanCollectionDataSource resultadoConsulta) throws Exception {
+    private byte[] pdfReport(HttpServletResponse response, JRBeanCollectionDataSource resultadoConsulta) throws Exception {
         JasperPrint jasperPrint = null;
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
         try {
-            String name = "/relatorios/" + nomeRelatorio + ".jasper";
+            String name = "/relatorios/pessoasReport.jasper";
 
             InputStream resourceAsStream = getClass().getResourceAsStream(name);
             JasperReport jasperReport = (JasperReport) JRLoader.loadObject(resourceAsStream);
-            jasperPrint = JasperFillManager.fillReport(
-                    jasperReport,
-                    parametros, resultadoConsulta);
+            jasperPrint = JasperFillManager.fillReport( jasperReport, new HashMap<>(), resultadoConsulta);
             response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition", "inline; filename=" + nomeRelatorio + ".pdf");
+            response.setHeader("Content-Disposition", "inline; filename=pessoasReport.pdf");
             JasperExportManager.exportReportToPdfStream(jasperPrint, outStream);
             return outStream.toByteArray();
         } catch (Throwable e) {

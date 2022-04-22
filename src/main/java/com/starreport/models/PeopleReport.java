@@ -5,14 +5,15 @@ import java.util.List;
 
 public class PeopleReport {
     private String name;
-    private String height;
-    private String mass;
+    private int height;
+    private int mass;
     private String hair_color;
     private String skin_color;
     private String eye_color;
     private String gender;
     private String homeworldName;
     private List<Films> films;
+    private Integer qttFilms;
 
     public String getName() {
 
@@ -24,19 +25,19 @@ public class PeopleReport {
         this.name = name;
     }
 
-    public String getHeight() {
+    public int getHeight() {
         return height;
     }
 
-    public void setHeight(String height) {
+    public void setHeight(int height) {
         this.height = height;
     }
 
-    public String getMass() {
+    public int getMass() {
         return mass;
     }
 
-    public void setMass(String mass) {
+    public void setMass(int mass) {
         this.mass = mass;
     }
 
@@ -88,4 +89,14 @@ public class PeopleReport {
     public void setFilms(List<Films> films) {
         this.films = films;
     }
+
+    public Integer getQttFilms() {
+        return qttFilms;
+    }
+
+    public void setQttFilms(Integer qttFilms) {
+        this.qttFilms = qttFilms;
+    }
 }
+
+
